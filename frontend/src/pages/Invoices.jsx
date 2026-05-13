@@ -3,7 +3,7 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
   TextField, Select, MenuItem, FormControl, InputLabel, Typography, IconButton, Chip, Stack, Divider,
-  Snackbar, Alert,
+  Snackbar, Alert, Checkbox,
 } from '@mui/material'
 import { Add, Delete, Visibility, Send, Check, Download, Email } from '@mui/icons-material'
 import api from '../api'
@@ -17,7 +17,7 @@ export default function Invoices() {
   const [clients, setClients] = useState([])
   const [open, setOpen] = useState(false)
   const [viewOpen, setViewOpen] = useState(false)
-  const [selected, setSelected] = useState(null)
+  const [viewInv, setViewInv] = useState(null)
   const [form, setForm] = useState({ client_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: '', notes: '', items: [{ description: '', quantity: 1, unit_price: 0 }] })
 
   useEffect(() => {
@@ -49,7 +49,35 @@ export default function Invoices() {
     loadInvoices()
   }
 
+  const [selected, setSelected] = useState(new Set())
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+
+  const toggleSelect = (id) => {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    setSelected(next)
+  }
+
+  const toggleSelectAll = () => {
+    if (allSelected) setSelected(new Set())
+    else setSelected(new Set(invoices.map(inv => inv.id)))
+  }
+
+  const allSelected = invoices.length > 0 && invoices.every(inv => selected.has(inv.id))
+
+  const handleBulkDelete = async () => {
+    const ids = [...selected]
+    try {
+      await api.post('/invoices/bulk-delete', { ids })
+      setSelected(new Set())
+      setConfirmBulkDelete(false)
+      loadInvoices()
+      setSnackbar({ open: true, message: `${t('bulkDeleteConfirm')} ${ids.length} ${t('invoices')}`, severity: 'success' })
+    } catch (err) {
+      setSnackbar({ open: true, message: err.response?.data?.detail || t('deleteError'), severity: 'error' })
+    }
+  }
 
   const handleSendEmail = async (inv) => {
     try {
@@ -68,7 +96,7 @@ export default function Invoices() {
     }
   }
 
-  const viewInvoice = (inv) => { setSelected(inv); setViewOpen(true) }
+  const viewInvoice = (inv) => { setViewInv(inv); setViewOpen(true) }
 
   const downloadExcel = async () => {
     try {
@@ -103,6 +131,11 @@ export default function Invoices() {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
         <Typography variant="h5">{t('invoices')}</Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          {selected.size > 0 && (
+            <Button color="error" variant="outlined" startIcon={<Delete />} size="small" onClick={() => setConfirmBulkDelete(true)}>
+              {t('deleteSelected')} ({selected.size})
+            </Button>
+          )}
           <Button variant="outlined" startIcon={<Download />} size="small" onClick={downloadExcel}>
             {t('excel')}
           </Button>
@@ -118,6 +151,9 @@ export default function Invoices() {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                    <Checkbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected} onChange={toggleSelectAll} />
+                  </TableCell>
                   <TableCell>{t('invoiceNumber')}</TableCell>
                   <TableCell>{t('client')}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('date')}</TableCell>
@@ -130,7 +166,10 @@ export default function Invoices() {
                 {invoices.map((inv) => {
                   const client = clients.find(c => c.id === inv.client_id)
                   return (
-                    <TableRow key={inv.id} hover>
+                    <TableRow key={inv.id} hover selected={selected.has(inv.id)}>
+                      <TableCell padding="checkbox" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                        <Checkbox checked={selected.has(inv.id)} onChange={() => toggleSelect(inv.id)} />
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{inv.invoice_number}</TableCell>
                       <TableCell>{client?.name || inv.client_id}</TableCell>
                       <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{inv.issue_date}</TableCell>
@@ -153,7 +192,7 @@ export default function Invoices() {
                   )
                 })}
                 {invoices.length === 0 && (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}>{t('noInvoices')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4 }}>{t('noInvoices')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -203,33 +242,44 @@ export default function Invoices() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>{t('invoice')} {selected?.invoice_number}</DialogTitle>
+      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('deleteSelected')}</DialogTitle>
         <DialogContent>
-          {selected && (() => {
-            const client = clients.find(c => c.id === selected.client_id)
+          <Typography>{t('bulkDeleteConfirm')} {selected.size} {t('invoices')}.</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">{t('cancel')}</Button>
+          <Button color="error" variant="contained" onClick={handleBulkDelete}>{t('delete')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={viewOpen} onClose={() => setViewOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>{t('invoice')} {viewInv?.invoice_number}</DialogTitle>
+        <DialogContent>
+          {viewInv && (() => {
+            const client = clients.find(c => c.id === viewInv.client_id)
             return (
               <Box>
                 <Stack spacing={1} sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">{t('client')}</Typography>
-                    <Typography fontWeight={600}>{client?.name || selected.client_id}</Typography>
+                    <Typography fontWeight={600}>{client?.name || viewInv.client_id}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">{t('date')}</Typography>
-                    <Typography>{selected.issue_date} — {selected.due_date}</Typography>
+                    <Typography>{viewInv.issue_date} — {viewInv.due_date}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">{t('status')}</Typography>
-                    <Chip label={t(selected.status)} color={statusColors[selected.status]} size="small" />
+                    <Chip label={t(viewInv.status)} color={statusColors[viewInv.status]} size="small" />
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">{t('total')}</Typography>
-                    <Typography variant="h6" fontWeight={700}>{selected.total_amount.toLocaleString()} {t('currency')}</Typography>
+                    <Typography variant="h6" fontWeight={700}>{viewInv.total_amount.toLocaleString()} {t('currency')}</Typography>
                   </Box>
                 </Stack>
-                {selected.notes && (
-                  <Typography variant="body2"><strong>{t('notes')}:</strong> {selected.notes}</Typography>
+                {viewInv.notes && (
+                  <Typography variant="body2"><strong>{t('notes')}:</strong> {viewInv.notes}</Typography>
                 )}
               </Box>
             )

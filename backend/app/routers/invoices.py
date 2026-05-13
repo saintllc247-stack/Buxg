@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -66,6 +67,17 @@ def update_status(inv_id: int, body: dict, db: Session = Depends(get_db), user: 
     inv.status = status
     db.commit()
     return {"ok": True}
+
+
+class BulkDeleteIds(BaseModel):
+    ids: list[int]
+
+
+@router.post("/bulk-delete")
+def bulk_delete_invoices(data: BulkDeleteIds, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    deleted = db.query(Invoice).filter(Invoice.id.in_(data.ids), Invoice.user_id == user.id).delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": deleted}
 
 
 @router.delete("/{inv_id}")
