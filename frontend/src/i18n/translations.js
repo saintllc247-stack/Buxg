@@ -150,6 +150,8 @@ export const translations = {
     passwordTooShort: 'Пароль должен быть минимум 4 символа',
     language: 'Язык',
     languageSection: 'Язык интерфейса',
+    installApp: 'Установите приложение на телефон',
+    install: 'Установить',
   },
 
   uz: {
@@ -294,6 +296,8 @@ export const translations = {
     passwordTooShort: 'Parol kamida 4 ta belgidan iborat bo\'lishi kerak',
     language: 'Til',
     languageSection: 'Interfeys tili',
+    installApp: 'Ilovani telefonga o\'rnating',
+    install: 'O\'rnatish',
   },
 
   en: {
@@ -438,6 +442,8 @@ export const translations = {
     passwordTooShort: 'Password must be at least 4 characters',
     language: 'Language',
     languageSection: 'Interface language',
+    installApp: 'Install the app on your phone',
+    install: 'Install',
   },
 }
 

@@ -11,6 +11,7 @@ import Invoices from './pages/Invoices'
 import Settings from './pages/Settings'
 import Categories from './pages/Categories'
 import Documents from './pages/Documents'
+import PwaInstallPrompt from './components/PwaInstallPrompt'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -20,18 +21,21 @@ function PrivateRoute({ children }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-        <Route path="transactions" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />
-        <Route path="clients" element={<ErrorBoundary><Clients /></ErrorBoundary>} />
-        <Route path="invoices" element={<ErrorBoundary><Invoices /></ErrorBoundary>} />
-        <Route path="settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
-        <Route path="categories" element={<ErrorBoundary><Categories /></ErrorBoundary>} />
-        <Route path="documents" element={<ErrorBoundary><Documents /></ErrorBoundary>} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path="transactions" element={<ErrorBoundary><Transactions /></ErrorBoundary>} />
+          <Route path="clients" element={<ErrorBoundary><Clients /></ErrorBoundary>} />
+          <Route path="invoices" element={<ErrorBoundary><Invoices /></ErrorBoundary>} />
+          <Route path="settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+          <Route path="categories" element={<ErrorBoundary><Categories /></ErrorBoundary>} />
+          <Route path="documents" element={<ErrorBoundary><Documents /></ErrorBoundary>} />
+        </Route>
+      </Routes>
+      <PwaInstallPrompt />
+    </>
   )
 }
