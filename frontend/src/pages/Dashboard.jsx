@@ -35,7 +35,7 @@ export default function Dashboard() {
     if (dateFrom) params.from = dateFrom
     if (dateTo) params.to = dateTo
     api.get('/reports/dashboard', { params }).then((r) => setData(r.data)).catch((e) => {
-      setError(e.response?.data?.detail || e.message || 't('loadError')')
+      setError(e.response?.data?.detail || e.message || t('loadError'))
     })
   }, [dateFrom, dateTo])
 
@@ -45,9 +45,9 @@ export default function Dashboard() {
 
   if (error) return (
     <Box sx={{ p: 4, textAlign: 'center' }}>
-      <Typography color="error" variant="h6" gutterBottom>Ошибка загрузки</Typography>
+      <Typography color="error" variant="h6" gutterBottom>{t('loadError')}</Typography>
       <Typography color="text.secondary" sx={{ mb: 2 }}>{error}</Typography>
-      <Button variant="outlined" onClick={load}>Повторить</Button>
+      <Button variant="outlined" onClick={load}>{t('retry')}</Button>
     </Box>
   )
 
@@ -73,13 +73,13 @@ export default function Dashboard() {
           )}
         </Stack>
       </Grid>
-      {statCards.map(({ key, label, icon, color, bg }) => (
+      {statCards.map(({ key, icon, color, bg }) => (
         <Grid item xs={12} md={4} key={key}>
           <Card sx={{ bgcolor: bg, border: 'none', boxShadow: 'none' }}>
             <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ color, display: 'flex' }}>{icon}</Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">{label}</Typography>
+                <Typography variant="body2" color="text.secondary">{t(key === 'total_income' ? 'totalIncome' : key === 'total_expense' ? 'totalExpense' : 'balance')}</Typography>
                 <Typography variant="h5" fontWeight={700} color={key === 'balance' ? (data.balance >= 0 ? 'primary.main' : 'error.main') : color}>
                   {Number(data[key]).toLocaleString()} сум
                 </Typography>
@@ -174,11 +174,9 @@ export default function Dashboard() {
   )
 }
 
-const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#dc2626', '#9333ea']
-
 const statCards = [
-  { key: 'total_income', label: 'Доходы', icon: <TrendingUp />, color: '#16a34a', bg: '#f0fdf4' },
-  { key: 'total_expense', label: 'Расходы', icon: <TrendingDown />, color: '#dc2626', bg: '#fef2f2' },
-  { key: 'balance', label: 'Баланс', icon: <AccountBalanceWallet />, color: '#2563eb', bg: '#eff6ff' },
+  { key: 'total_income', icon: <TrendingUp />, color: '#16a34a', bg: '#f0fdf4' },
+  { key: 'total_expense', icon: <TrendingDown />, color: '#dc2626', bg: '#fef2f2' },
+  { key: 'balance', icon: <AccountBalanceWallet />, color: '#2563eb', bg: '#eff6ff' },
 ]
 
