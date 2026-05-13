@@ -55,9 +55,9 @@ export default function Clients() {
               <TableHead>
                 <TableRow>
                   <TableCell>{t('name')}</TableCell>
-                  <TableCell>{t('email')}</TableCell>
-                  <TableCell>{t('phone')}</TableCell>
-                  <TableCell>{t('tin')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('email')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('phone')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('tin')}</TableCell>
                   <TableCell width={80}></TableCell>
                 </TableRow>
               </TableHead>
@@ -65,9 +65,9 @@ export default function Clients() {
                 {clients.map((c) => (
                   <TableRow key={c.id} hover>
                     <TableCell fontWeight={600}>{c.name}</TableCell>
-                    <TableCell>{c.email || '-'}</TableCell>
-                    <TableCell>{c.phone || '-'}</TableCell>
-                    <TableCell>{c.tin || '-'}</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{c.email || '-'}</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{c.phone || '-'}</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{c.tin || '-'}</TableCell>
                     <TableCell>
                       <IconButton size="small" onClick={() => { setEdit(c); setForm(c); setOpen(true) }}><Edit fontSize="small" /></IconButton>
                       <IconButton size="small" onClick={() => handleDelete(c.id)}><Delete fontSize="small" /></IconButton>

@@ -177,14 +177,14 @@ export default function Transactions() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                     <Checkbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected} onChange={toggleSelectAll} />
                   </TableCell>
                   <TableCell>{t('date')}</TableCell>
-                  <TableCell>Тип</TableCell>
-                  <TableCell>{t('category')}</TableCell>
-                  <TableCell>{t('client')}</TableCell>
-                  <TableCell>{t('description')}</TableCell>
+                  <TableCell>{t('type')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('category')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('client')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t('description')}</TableCell>
                   <TableCell align="right">{t('amount')}</TableCell>
                   <TableCell width={80}></TableCell>
                 </TableRow>
@@ -195,7 +195,7 @@ export default function Transactions() {
                   const clientName = clients.find(c => c.id === t.client_id)?.name
                   return (
                     <TableRow key={t.id} hover selected={selected.has(t.id)}>
-                      <TableCell padding="checkbox">
+                      <TableCell padding="checkbox" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                         <Checkbox checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
                       </TableCell>
                       <TableCell>{t.date}</TableCell>
@@ -204,9 +204,9 @@ export default function Transactions() {
                           {t.type === 'income' ? t('income') : t('expense')}
                         </Typography>
                       </TableCell>
-                      <TableCell><Chip label={catName || '-'} size="small" variant="outlined" /></TableCell>
-                      <TableCell>{clientName || '-'}</TableCell>
-                      <TableCell>{t.description || '-'}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}><Chip label={catName || '-'} size="small" variant="outlined" /></TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{clientName || '-'}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t.description || '-'}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} {t('currency')}</TableCell>
                       <TableCell>
                         <IconButton size="small" onClick={() => openEdit(t)}><Edit fontSize="small" /></IconButton>

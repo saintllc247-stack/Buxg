@@ -120,8 +120,8 @@ export default function Invoices() {
                 <TableRow>
                   <TableCell>{t('invoiceNumber')}</TableCell>
                   <TableCell>{t('client')}</TableCell>
-                  <TableCell>{t('date')}</TableCell>
-                  <TableCell>{t('status')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('date')}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{t('status')}</TableCell>
                   <TableCell align="right">{t('total')}</TableCell>
                   <TableCell width={200}></TableCell>
                 </TableRow>
@@ -133,13 +133,12 @@ export default function Invoices() {
                     <TableRow key={inv.id} hover>
                       <TableCell sx={{ fontWeight: 600 }}>{inv.invoice_number}</TableCell>
                       <TableCell>{client?.name || inv.client_id}</TableCell>
-                      <TableCell>{inv.issue_date}</TableCell>
-                      <TableCell><Chip label={t(inv.status)} color={statusColors[inv.status]} size="small" /></TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{inv.issue_date}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}><Chip label={t(inv.status)} color={statusColors[inv.status]} size="small" /></TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>{inv.total_amount.toLocaleString()} {t('currency')}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
                           <IconButton size="small" onClick={() => viewInvoice(inv)} title={t('view')}><Visibility fontSize="small" /></IconButton>
-                          <IconButton size="small" onClick={() => handleSendEmail(inv)} title={t('sendEmail')}><Email fontSize="small" /></IconButton>
                           <IconButton size="small" onClick={() => downloadInvoiceXlsx(inv)} title={t('download')}><Download fontSize="small" /></IconButton>
                           {inv.status === 'draft' && (
                             <>
