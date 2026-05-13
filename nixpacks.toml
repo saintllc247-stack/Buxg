@@ -11,6 +11,7 @@ cmds = [
 cmds = [
   "cd frontend && npm run build",
   "rm -rf backend/static/assets",
+  "mkdir -p backend/static",
   "cp -r frontend/dist/. backend/static/"
 ]
 
