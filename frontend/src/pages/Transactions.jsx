@@ -190,27 +190,27 @@ export default function Transactions() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filtered.map((t) => {
-                  const catName = categories.find(c => c.id === t.category_id)?.name
-                  const clientName = clients.find(c => c.id === t.client_id)?.name
+                {filtered.map((txn) => {
+                  const catName = categories.find(c => c.id === txn.category_id)?.name
+                  const clientName = clients.find(c => c.id === txn.client_id)?.name
                   return (
-                    <TableRow key={t.id} hover selected={selected.has(t.id)}>
+                    <TableRow key={txn.id} hover selected={selected.has(txn.id)}>
                       <TableCell padding="checkbox" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                        <Checkbox checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
+                        <Checkbox checked={selected.has(txn.id)} onChange={() => toggleSelect(txn.id)} />
                       </TableCell>
-                      <TableCell>{t.date}</TableCell>
+                      <TableCell>{txn.date}</TableCell>
                       <TableCell>
-                        <Typography color={t.type === 'income' ? 'success.main' : 'error.main'} fontWeight={600}>
-                          {t.type === 'income' ? t('income') : t('expense')}
+                        <Typography color={txn.type === 'income' ? 'success.main' : 'error.main'} fontWeight={600}>
+                          {txn.type === 'income' ? t('income') : t('expense')}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}><Chip label={catName || '-'} size="small" variant="outlined" /></TableCell>
                       <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{clientName || '-'}</TableCell>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{t.description || '-'}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} {t('currency')}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>{txn.description || '-'}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{txn.amount.toLocaleString()} {t('currency')}</TableCell>
                       <TableCell>
-                        <IconButton size="small" onClick={() => openEdit(t)}><Edit fontSize="small" /></IconButton>
-                        <IconButton size="small" onClick={() => handleDelete(t.id)}><Delete fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => openEdit(txn)}><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => handleDelete(txn.id)}><Delete fontSize="small" /></IconButton>
                       </TableCell>
                     </TableRow>
                   )
