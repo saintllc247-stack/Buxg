@@ -136,7 +136,7 @@ export default function Layout() {
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8, minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box component="main" sx={{ flexGrow: 1, p: { xs: 1.5, sm: 3 }, mt: 8, minHeight: '100vh', bgcolor: 'background.default' }}>
         <Outlet />
       </Box>
     </Box>

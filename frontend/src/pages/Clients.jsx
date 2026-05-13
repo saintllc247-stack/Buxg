@@ -34,16 +34,16 @@ export default function Clients() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
         <Typography variant="h5">{t('clients')}</Typography>
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" startIcon={<Download />}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Button variant="outlined" startIcon={<Download />} size="small"
             onClick={() => window.open('/api/exports/clients/excel', '_blank')}>
-            Excel
+            {t('excel')}
           </Button>
-          <Button variant="contained" startIcon={<Add />}
+          <Button variant="contained" startIcon={<Add />} size="small"
             onClick={() => { setEdit(null); setForm({ name: '', email: '', phone: '', address: '', tin: '' }); setOpen(true) }}>
-            Добавить
+            {t('addClient')}
           </Button>
         </Stack>
       </Box>
@@ -54,7 +54,7 @@ export default function Clients() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Название</TableCell>
+                  <TableCell>{t('name')}</TableCell>
                   <TableCell>{t('email')}</TableCell>
                   <TableCell>{t('phone')}</TableCell>
                   <TableCell>{t('tin')}</TableCell>

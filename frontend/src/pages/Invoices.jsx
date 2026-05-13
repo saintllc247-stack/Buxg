@@ -7,11 +7,12 @@ import {
 } from '@mui/material'
 import { Add, Delete, Visibility, Send, Check, Download, Email } from '@mui/icons-material'
 import api from '../api'
+import { useLang } from '../context/LangContext'
 
 const statusColors = { draft: 'default', sent: 'primary', paid: 'success', cancelled: 'error' }
-const statusLabels = { draft: 'Черновик', sent: 'Отправлен', paid: 'Оплачен', cancelled: 'Отменён' }
 
 export default function Invoices() {
+  const { t } = useLang()
   const [invoices, setInvoices] = useState([])
   const [clients, setClients] = useState([])
   const [open, setOpen] = useState(false)
@@ -53,15 +54,15 @@ export default function Invoices() {
   const handleSendEmail = async (inv) => {
     try {
       await api.post(`/auth/send-invoice/${inv.id}`)
-      setSnackbar({ open: true, message: 'Счёт отправлен клиенту', severity: 'success' })
+      setSnackbar({ open: true, message: t('invoiceSent'), severity: 'success' })
       loadInvoices()
     } catch (e) {
-      setSnackbar({ open: true, message: e.response?.data?.detail || 'Ошибка отправки', severity: 'error' })
+      setSnackbar({ open: true, message: e.response?.data?.detail || t('sendError'), severity: 'error' })
     }
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить счёт?')) {
+    if (confirm(t('deleteInvoiceConfirm'))) {
       await api.delete(`/invoices/${id}`)
       loadInvoices()
     }
@@ -79,7 +80,7 @@ export default function Invoices() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      alert(err.response?.data?.detail || 'Ошибка экспорта')
+      alert(err.response?.data?.detail || t('exportError'))
     }
   }
 
@@ -93,20 +94,20 @@ export default function Invoices() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      alert(err.response?.data?.detail || 'Ошибка скачивания')
+      alert(err.response?.data?.detail || t('exportError'))
     }
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">Счета</Typography>
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" startIcon={<Download />} onClick={downloadExcel}>
-            Excel
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
+        <Typography variant="h5">{t('invoices')}</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Button variant="outlined" startIcon={<Download />} size="small" onClick={downloadExcel}>
+            {t('excel')}
           </Button>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}>
-            Выставить счёт
+          <Button variant="contained" startIcon={<Add />} size="small" onClick={() => setOpen(true)}>
+            {t('addInvoice')}
           </Button>
         </Stack>
       </Box>
@@ -117,11 +118,11 @@ export default function Invoices() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>№ счёта</TableCell>
-                  <TableCell>Клиент</TableCell>
-                  <TableCell>Дата</TableCell>
-                  <TableCell>Статус</TableCell>
-                  <TableCell align="right">Сумма</TableCell>
+                  <TableCell>{t('invoiceNumber')}</TableCell>
+                  <TableCell>{t('client')}</TableCell>
+                  <TableCell>{t('date')}</TableCell>
+                  <TableCell>{t('status')}</TableCell>
+                  <TableCell align="right">{t('total')}</TableCell>
                   <TableCell width={200}></TableCell>
                 </TableRow>
               </TableHead>
@@ -133,27 +134,27 @@ export default function Invoices() {
                       <TableCell sx={{ fontWeight: 600 }}>{inv.invoice_number}</TableCell>
                       <TableCell>{client?.name || inv.client_id}</TableCell>
                       <TableCell>{inv.issue_date}</TableCell>
-                      <TableCell><Chip label={statusLabels[inv.status]} color={statusColors[inv.status]} size="small" /></TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{inv.total_amount.toLocaleString()} сум</TableCell>
+                      <TableCell><Chip label={t(inv.status)} color={statusColors[inv.status]} size="small" /></TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{inv.total_amount.toLocaleString()} {t('currency')}</TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.5}>
-                          <IconButton size="small" onClick={() => viewInvoice(inv)} title="Просмотр"><Visibility fontSize="small" /></IconButton>
-                          <IconButton size="small" onClick={() => handleSendEmail(inv)} title="Отправить по email"><Email fontSize="small" /></IconButton>
-                          <IconButton size="small" onClick={() => downloadInvoiceXlsx(inv)} title="Скачать"><Download fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => viewInvoice(inv)} title={t('view')}><Visibility fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => handleSendEmail(inv)} title={t('sendEmail')}><Email fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => downloadInvoiceXlsx(inv)} title={t('download')}><Download fontSize="small" /></IconButton>
                           {inv.status === 'draft' && (
                             <>
-                              <IconButton size="small" onClick={() => updateStatus(inv.id, 'sent')} title="Отметить отправленным"><Send fontSize="small" /></IconButton>
-                              <IconButton size="small" onClick={() => updateStatus(inv.id, 'paid')} title="Отметить оплаченным"><Check fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={() => updateStatus(inv.id, 'sent')} title={t('markSent')}><Send fontSize="small" /></IconButton>
+                              <IconButton size="small" onClick={() => updateStatus(inv.id, 'paid')} title={t('markPaid')}><Check fontSize="small" /></IconButton>
                             </>
                           )}
-                          <IconButton size="small" onClick={() => handleDelete(inv.id)} title="Удалить"><Delete fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => handleDelete(inv.id)} title={t('delete')}><Delete fontSize="small" /></IconButton>
                         </Stack>
                       </TableCell>
                     </TableRow>
                   )
                 })}
                 {invoices.length === 0 && (
-                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}>Нет счетов</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4 }}>{t('noInvoices')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -162,49 +163,49 @@ export default function Invoices() {
       </Card>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Новый счёт</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{t('addInvoice')}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Клиент</InputLabel>
-            <Select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} label="Клиент" required>
+            <InputLabel>{t('client')}</InputLabel>
+            <Select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} label={t('client')} required>
               {clients.map((c) => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
             </Select>
           </FormControl>
-          <Stack direction="row" spacing={2}>
-            <TextField label="Дата выписки" type="date" fullWidth margin="normal" required
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField label={t('issueDate')} type="date" fullWidth margin="normal" required
               value={form.issue_date} onChange={(e) => setForm({ ...form, issue_date: e.target.value })} />
-            <TextField label="Срок оплаты" type="date" fullWidth margin="normal" required
+            <TextField label={t('dueDate')} type="date" fullWidth margin="normal" required
               value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
           </Stack>
-          <TextField label="Примечание" fullWidth margin="normal" multiline rows={2}
+          <TextField label={t('notes')} fullWidth margin="normal" multiline rows={2}
             value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <Divider sx={{ my: 2 }} />
-          <Typography variant="subtitle1" fontWeight={600} gutterBottom>Позиции</Typography>
+          <Typography variant="subtitle1" fontWeight={600} gutterBottom>{t('items')}</Typography>
           {form.items.map((item, i) => (
-            <Stack key={i} direction="row" spacing={1} sx={{ mb: 1.5 }} alignItems="center">
-              <TextField label="Описание" size="small" sx={{ flex: 2 }}
+            <Stack key={i} direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 1.5, p: 1, bgcolor: 'grey.50', borderRadius: 1 }} alignItems="center">
+              <TextField label={t('description')} size="small" sx={{ flex: 2, width: { xs: '100%', sm: 'auto' } }}
                 value={item.description} onChange={(e) => updateItem(i, 'description', e.target.value)} />
-              <TextField label="Кол-во" type="number" size="small" sx={{ width: 80 }}
+              <TextField label={t('quantity')} type="number" size="small" sx={{ width: { xs: '100%', sm: 80 } }}
                 value={item.quantity} onChange={(e) => updateItem(i, 'quantity', e.target.value)} />
-              <TextField label="Цена" type="number" size="small" sx={{ width: 100 }}
+              <TextField label={t('price')} type="number" size="small" sx={{ width: { xs: '100%', sm: 100 } }}
                 value={item.unit_price} onChange={(e) => updateItem(i, 'unit_price', e.target.value)} />
               <Typography sx={{ minWidth: 80, fontWeight: 600 }}>
-                {((Number(item.quantity) || 0) * (Number(item.unit_price) || 0)).toLocaleString()} сум
+                {((Number(item.quantity) || 0) * (Number(item.unit_price) || 0)).toLocaleString()} {t('currency')}
               </Typography>
               <IconButton size="small" color="error" onClick={() => removeItem(i)}><Delete fontSize="small" /></IconButton>
             </Stack>
           ))}
-          <Button onClick={addItem} size="small">+ Добавить позицию</Button>
-          <Typography variant="h6" sx={{ mt: 2 }}>Итого: {total.toLocaleString()} сум</Typography>
+          <Button onClick={addItem} size="small">{t('addItem')}</Button>
+          <Typography variant="h6" sx={{ mt: 2 }}>{t('total')}: {total.toLocaleString()} {t('currency')}</Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)} color="inherit">Отмена</Button>
-          <Button variant="contained" onClick={handleSave} disabled={!form.client_id || !form.due_date}>Сохранить</Button>
+        <DialogActions sx={{ px: 3, pb: 2, flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
+          <Button onClick={() => setOpen(false)} color="inherit" fullWidth>{t('cancel')}</Button>
+          <Button variant="contained" onClick={handleSave} disabled={!form.client_id || !form.due_date} fullWidth>{t('save')}</Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={viewOpen} onClose={() => setViewOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Счёт {selected?.invoice_number}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{t('invoice')} {selected?.invoice_number}</DialogTitle>
         <DialogContent>
           {selected && (() => {
             const client = clients.find(c => c.id === selected.client_id)
@@ -212,31 +213,31 @@ export default function Invoices() {
               <Box>
                 <Stack spacing={1} sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Клиент</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('client')}</Typography>
                     <Typography fontWeight={600}>{client?.name || selected.client_id}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Дата</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('date')}</Typography>
                     <Typography>{selected.issue_date} — {selected.due_date}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Статус</Typography>
-                    <Chip label={statusLabels[selected.status]} color={statusColors[selected.status]} size="small" />
+                    <Typography variant="body2" color="text.secondary">{t('status')}</Typography>
+                    <Chip label={t(selected.status)} color={statusColors[selected.status]} size="small" />
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">Сумма</Typography>
-                    <Typography variant="h6" fontWeight={700}>{selected.total_amount.toLocaleString()} сум</Typography>
+                    <Typography variant="body2" color="text.secondary">{t('total')}</Typography>
+                    <Typography variant="h6" fontWeight={700}>{selected.total_amount.toLocaleString()} {t('currency')}</Typography>
                   </Box>
                 </Stack>
                 {selected.notes && (
-                  <Typography variant="body2"><strong>Примечание:</strong> {selected.notes}</Typography>
+                  <Typography variant="body2"><strong>{t('notes')}:</strong> {selected.notes}</Typography>
                 )}
               </Box>
             )
           })()}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setViewOpen(false)} variant="outlined">Закрыть</Button>
+          <Button onClick={() => setViewOpen(false)} variant="outlined">{t('close')}</Button>
         </DialogActions>
       </Dialog>
 

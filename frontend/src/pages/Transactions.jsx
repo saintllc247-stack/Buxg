@@ -125,33 +125,33 @@ export default function Transactions() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h5">Транзакции</Typography>
-        <Stack direction="row" spacing={1}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
+        <Typography variant="h5">{t('transactions')}</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {selected.size > 0 && (
-            <Button color="error" variant="outlined" startIcon={<Delete />} onClick={() => setConfirmBulkDelete(true)}>
-              Удалить ({selected.size})
+            <Button color="error" variant="outlined" startIcon={<Delete />} size="small" onClick={() => setConfirmBulkDelete(true)}>
+              {t('deleteSelected')} ({selected.size})
             </Button>
           )}
-          <Button variant="outlined" startIcon={<Upload />} onClick={() => setImportOpen(true)}>
-            Импорт CSV
+          <Button variant="outlined" startIcon={<Upload />} size="small" onClick={() => setImportOpen(true)}>
+            {t('importCsv')}
           </Button>
-          <Tooltip title="Удалить все транзакции, добавленные через импорт">
-            <Button variant="outlined" color="error" startIcon={<Clear />} onClick={() => setConfirmClear(true)}>
-              Очистить импорт
+          <Tooltip title={t('clearImportConfirm')}>
+            <Button variant="outlined" color="error" startIcon={<Clear />} size="small" onClick={() => setConfirmClear(true)}>
+              {t('clearImport')}
             </Button>
           </Tooltip>
-          <Button variant="outlined" startIcon={<Download />} onClick={downloadExcel}>
-            Excel
+          <Button variant="outlined" startIcon={<Download />} size="small" onClick={downloadExcel}>
+            {t('excel')}
           </Button>
-          <Button variant="contained" startIcon={<Add />}
+          <Button variant="contained" startIcon={<Add />} size="small"
             onClick={() => { setEdit(null); setForm({ type: 'income', amount: '', category_id: '', description: '', date: new Date().toISOString().split('T')[0], client_id: '' }); setOpen(true) }}>
-            Добавить
+            {t('addTransaction')}
           </Button>
         </Stack>
       </Box>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }} alignItems="center">
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }} alignItems={{ xs: 'stretch', sm: 'center' }}>
         <FormControl size="small" sx={{ minWidth: 140 }}>
           <InputLabel>{t('type')}</InputLabel>
           <Select value={filter.type} label={t('type')} onChange={(e) => setFilter({ ...filter, type: e.target.value })}>
@@ -166,8 +166,8 @@ export default function Transactions() {
         {(filter.type || filter.search) && (
           <Button size="small" onClick={() => setFilter({ type: '', search: '' })}>{t('reset')}</Button>
         )}
-        <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto !important' }}>
-          {filtered.length} из {txns.length}
+        <Typography variant="body2" color="text.secondary" sx={{ ml: { sm: 'auto' }, mt: { xs: -1, sm: 0 } }}>
+          {filtered.length} {t('of')} {txns.length}
         </Typography>
       </Stack>
 
@@ -225,13 +225,13 @@ export default function Transactions() {
       </Card>
 
       <Dialog open={importOpen} onClose={() => setImportOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Импорт транзакций из CSV</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{t('importTitle')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Поддерживаются CSV и Excel (.xlsx). Автоопределение формата: обычный (type,amount,description,date) или выгрузка маркетплейса (orderId, order amount, customer).
+            {t('importDesc')}
           </Typography>
           <Button variant="contained" component="label">
-            Выбрать файл
+            {t('chooseFile')}
             <input type="file" accept=".csv,.xlsx" hidden onChange={async (e) => {
               const file = e.target.files?.[0]
               if (!file) return
@@ -241,7 +241,7 @@ export default function Transactions() {
                 const r = await api.post('/exports/transactions/import', formData)
                 setImportOpen(false)
                 load()
-                showMsg(`Импортировано ${r.data.imported} транзакций`)
+                showMsg(`${t('importSuccess')} ${r.data.imported} ${t('importedTransactions')}`)
               } catch (err) {
                 showMsg(err.response?.data?.detail || t('exportError'), 'error')
               }
@@ -253,10 +253,10 @@ export default function Transactions() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs">
-        <DialogTitle>Удалить выбранные транзакции?</DialogTitle>
+      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('deleteSelected')}</DialogTitle>
         <DialogContent>
-          <Typography>Будет удалено {selected.size} транзакци{selected.size === 1 ? 'я' : selected.size >= 2 && selected.size <= 4 ? 'и' : 'й'}.</Typography>
+          <Typography>{t('bulkDeleteConfirm')} {selected.size} {t('transactionsWord')}.</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">{t('cancel')}</Button>
@@ -264,19 +264,19 @@ export default function Transactions() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={confirmClear} onClose={() => setConfirmClear(false)} maxWidth="xs">
-        <DialogTitle>Удалить импортированные транзакции?</DialogTitle>
+      <Dialog open={confirmClear} onClose={() => setConfirmClear(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('clearImportTitle')}</DialogTitle>
         <DialogContent>
-          <Typography>Все транзакции, добавленные через импорт, будут безвозвратно удалены.</Typography>
+          <Typography>{t('clearImportConfirm')}</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setConfirmClear(false)} color="inherit">Отмена</Button>
+          <Button onClick={() => setConfirmClear(false)} color="inherit">{t('cancel')}</Button>
           <Button color="error" variant="contained" onClick={async () => {
             try {
               const r = await api.delete('/transactions/imported/clear')
               setConfirmClear(false)
               load()
-              showMsg(`Удалено ${r.data.deleted} импортированных транзакций`)
+              showMsg(`${t('clearSuccess')} ${r.data.deleted} ${t('importedDeleted')}`)
             } catch (err) {
               showMsg(err.response?.data?.detail || 'Ошибка', 'error')
             }
@@ -288,18 +288,18 @@ export default function Transactions() {
         <DialogTitle sx={{ pb: 1 }}>{edit ? t('editTransaction') : t('newTransaction')}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Тип</InputLabel>
-            <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })} label="Тип">
-              <MenuItem value="income">Доход</MenuItem>
-              <MenuItem value="expense">Расход</MenuItem>
+            <InputLabel>{t('type')}</InputLabel>
+            <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })} label={t('type')}>
+              <MenuItem value="income">{t('income')}</MenuItem>
+              <MenuItem value="expense">{t('expense')}</MenuItem>
             </Select>
           </FormControl>
-          <TextField label="Сумма" type="number" fullWidth margin="normal" required autoFocus
-            inputProps={{ min: 0, step: 'any' }}
+          <TextField label={t('amount')} type="number" fullWidth margin="normal" required autoFocus
+            slotProps={{ htmlInput: { min: 0, step: 'any' } }}
             value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           <FormControl fullWidth margin="normal">
-            <InputLabel>Категория</InputLabel>
-            <Select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} label="Категория">
+            <InputLabel>{t('category')}</InputLabel>
+            <Select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} label={t('category')}>
               <MenuItem value="">—</MenuItem>
               {categories.filter(c => c.type === form.type).map((c) => (
                 <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
@@ -307,22 +307,22 @@ export default function Transactions() {
             </Select>
           </FormControl>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Клиент</InputLabel>
-            <Select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} label="Клиент">
+            <InputLabel>{t('client')}</InputLabel>
+            <Select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} label={t('client')}>
               <MenuItem value="">—</MenuItem>
               {clients.map((c) => (<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>))}
             </Select>
           </FormControl>
-          <TextField label="Описание" fullWidth margin="normal" multiline rows={2}
+          <TextField label={t('description')} fullWidth margin="normal" multiline rows={2}
             value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <TextField label="Дата" type="date" fullWidth margin="normal" required
+          <TextField label={t('date')} type="date" fullWidth margin="normal" required
             value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)} color="inherit">Отмена</Button>
+          <Button onClick={() => setOpen(false)} color="inherit">{t('cancel')}</Button>
           <Button variant="contained" onClick={handleSave}
             disabled={!form.amount || !form.date}>
-            Сохранить
+            {t('save')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -38,10 +38,10 @@ export default function Categories() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
         <Typography variant="h5">{t('categories')}</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => { setForm({ name: '', type: typeTab }); setOpen(true) }}>
-          Добавить
+        <Button variant="contained" startIcon={<Add />} size="small" onClick={() => { setForm({ name: '', type: typeTab }); setOpen(true) }}>
+          {t('addCategory')}
         </Button>
       </Box>
 
@@ -79,9 +79,9 @@ export default function Categories() {
       </Card>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>Новая категория</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{t('newCategory')}</DialogTitle>
         <DialogContent>
-          <TextField label="Название" fullWidth margin="normal" required autoFocus
+          <TextField label={t('categoryName')} fullWidth margin="normal" required autoFocus
             value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

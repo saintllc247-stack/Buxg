@@ -4,8 +4,9 @@ import {
   TableHead, TableRow, Paper, Typography, IconButton, Checkbox, Dialog,
   DialogTitle, DialogContent, DialogActions, Chip, Stack, LinearProgress,
 } from '@mui/material'
-import { Delete, Download, Upload, InsertDriveFile, Description, Image, PictureAsPdf } from '@mui/icons-material'
+import { Delete, Download, Upload, InsertDriveFile, Image, PictureAsPdf } from '@mui/icons-material'
 import api from '../api'
+import { useLang } from '../context/LangContext'
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B'
@@ -25,6 +26,7 @@ function fileIcon(mime) {
 }
 
 export default function Documents() {
+  const { t } = useLang()
   const [docs, setDocs] = useState([])
   const [selected, setSelected] = useState(new Set())
   const [uploading, setUploading] = useState(false)
@@ -44,7 +46,7 @@ export default function Documents() {
       try {
         await api.post('/documents/upload', fd)
       } catch (err) {
-        alert(err.response?.data?.detail || 'Ошибка загрузки')
+        alert(err.response?.data?.detail || t('loadError'))
       }
     }
     setUploading(false)
@@ -53,7 +55,7 @@ export default function Documents() {
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить файл?')) {
+    if (confirm(t('deleteDocumentConfirm'))) {
       await api.delete(`/documents/${id}`)
       setSelected(new Set([...selected].filter(s => s !== id)))
       load()
@@ -68,7 +70,7 @@ export default function Documents() {
       setConfirmBulkDelete(false)
       load()
     } catch (err) {
-      alert(err.response?.data?.detail || 'Ошибка')
+      alert(err.response?.data?.detail || t('saveError'))
     }
   }
 
@@ -82,16 +84,16 @@ export default function Documents() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h5">Файлы и документы</Typography>
-        <Stack direction="row" spacing={1}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: 1.5 }}>
+        <Typography variant="h5">{t('documents')}</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           {selected.size > 0 && (
-            <Button color="error" variant="outlined" startIcon={<Delete />} onClick={() => setConfirmBulkDelete(true)}>
-              Удалить ({selected.size})
+            <Button color="error" variant="outlined" startIcon={<Delete />} size="small" onClick={() => setConfirmBulkDelete(true)}>
+              {t('deleteSelected')} ({selected.size})
             </Button>
           )}
-          <Button variant="contained" component="label" startIcon={<Upload />} disabled={uploading}>
-            {uploading ? 'Загрузка...' : 'Загрузить'}
+          <Button variant="contained" component="label" startIcon={<Upload />} size="small" disabled={uploading}>
+            {uploading ? t('uploading') : t('upload')}
             <input type="file" multiple hidden onChange={handleUpload} />
           </Button>
         </Stack>
@@ -103,8 +105,8 @@ export default function Documents() {
         <Card>
           <CardContent sx={{ textAlign: 'center', py: 8 }}>
             <InsertDriveFile sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-            <Typography color="text.secondary">Нет загруженных файлов</Typography>
-            <Typography variant="body2" color="text.disabled">Нажмите «Загрузить», чтобы добавить файлы</Typography>
+            <Typography color="text.secondary">{t('noDocuments')}</Typography>
+            <Typography variant="body2" color="text.disabled">{t('uploadHint')}</Typography>
           </CardContent>
         </Card>
       ) : (
@@ -118,10 +120,10 @@ export default function Documents() {
                       <Checkbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected}
                         onChange={() => { if (allSelected) setSelected(new Set()); else setSelected(new Set(docs.map(d => d.id))) }} />
                     </TableCell>
-                    <TableCell>Файл</TableCell>
-                    <TableCell>Размер</TableCell>
-                    <TableCell>Тип</TableCell>
-                    <TableCell>Дата</TableCell>
+                    <TableCell>{t('file')}</TableCell>
+                    <TableCell>{t('size')}</TableCell>
+                    <TableCell>{t('type')}</TableCell>
+                    <TableCell>{t('date')}</TableCell>
                     <TableCell width={120}></TableCell>
                   </TableRow>
                 </TableHead>
@@ -134,7 +136,7 @@ export default function Documents() {
                       <TableCell>
                         <Stack direction="row" spacing={1.5} alignItems="center">
                           {fileIcon(d.mime_type)}
-                          <Typography fontWeight={500} noWrap sx={{ maxWidth: 300 }}>{d.original_name}</Typography>
+                          <Typography fontWeight={500} noWrap sx={{ maxWidth: { xs: 150, sm: 300 } }}>{d.original_name}</Typography>
                         </Stack>
                       </TableCell>
                       <TableCell>{formatSize(d.file_size)}</TableCell>
@@ -153,14 +155,14 @@ export default function Documents() {
         </Card>
       )}
 
-      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs">
-        <DialogTitle>Удалить выбранные файлы?</DialogTitle>
+      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('deleteDocumentConfirm')}</DialogTitle>
         <DialogContent>
-          <Typography>Будет удалено {selected.size} файл{selected.size === 1 ? '' : selected.size >= 2 && selected.size <= 4 ? 'а' : 'ов'}.</Typography>
+          <Typography>{t('bulkDeleteConfirm')} {selected.size} {t('filesWord')}.</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">Отмена</Button>
-          <Button color="error" variant="contained" onClick={handleBulkDelete}>Удалить</Button>
+          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">{t('cancel')}</Button>
+          <Button color="error" variant="contained" onClick={handleBulkDelete}>{t('delete')}</Button>
         </DialogActions>
       </Dialog>
     </Box>
