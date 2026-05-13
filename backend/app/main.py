@@ -2,10 +2,8 @@ from pathlib import Path
 import traceback
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-
 from app.database import engine, Base
 from app.config import settings
 from app.routers import auth_router, categories, clients, transactions, invoices, reports, exports, documents
@@ -105,4 +103,17 @@ def migrate():
 
 static_dir = Path(__file__).resolve().parent.parent / "static"
 if static_dir.exists():
-    app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="static")
+    index_file = static_dir / "index.html"
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/"):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        file = (static_dir / full_path).resolve()
+        if not str(file).startswith(str(static_dir.resolve())):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        if file.is_file():
+            return FileResponse(str(file))
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
