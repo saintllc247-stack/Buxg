@@ -6,8 +6,10 @@ import {
 } from '@mui/material'
 import { Add, Edit, Delete, Download } from '@mui/icons-material'
 import api from '../api'
+import { useLang } from '../context/LangContext'
 
 export default function Clients() {
+  const { t } = useLang()
   const [clients, setClients] = useState([])
   const [open, setOpen] = useState(false)
   const [edit, setEdit] = useState(null)
@@ -24,7 +26,7 @@ export default function Clients() {
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить клиента?')) {
+    if (confirm(t('deleteClientConfirm'))) {
       await api.delete(`/clients/${id}`)
       setClients(clients.filter((c) => c.id !== id))
     }
@@ -33,7 +35,7 @@ export default function Clients() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">Клиенты</Typography>
+        <Typography variant="h5">{t('clients')}</Typography>
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" startIcon={<Download />}
             onClick={() => window.open('/api/exports/clients/excel', '_blank')}>
@@ -53,9 +55,9 @@ export default function Clients() {
               <TableHead>
                 <TableRow>
                   <TableCell>Название</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Телефон</TableCell>
-                  <TableCell>ИНН</TableCell>
+                  <TableCell>{t('email')}</TableCell>
+                  <TableCell>{t('phone')}</TableCell>
+                  <TableCell>{t('tin')}</TableCell>
                   <TableCell width={80}></TableCell>
                 </TableRow>
               </TableHead>
@@ -73,7 +75,7 @@ export default function Clients() {
                   </TableRow>
                 ))}
                 {clients.length === 0 && (
-                  <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>Нет клиентов</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} align="center" sx={{ py: 4 }}>{t('noClients')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -82,22 +84,22 @@ export default function Clients() {
       </Card>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>{edit ? 'Редактировать клиента' : 'Новый клиент'}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{edit ? t('editClient') : t('newClient')}</DialogTitle>
         <DialogContent>
-          <TextField label="Название / Имя" fullWidth margin="normal" required autoFocus
+          <TextField label={t('name')} fullWidth margin="normal" required autoFocus
             value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <TextField label="Email" fullWidth margin="normal"
+          <TextField label={t('email')} fullWidth margin="normal"
             value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <TextField label="Телефон" fullWidth margin="normal"
+          <TextField label={t('phone')} fullWidth margin="normal"
             value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          <TextField label="Адрес" fullWidth margin="normal" multiline rows={2}
+          <TextField label={t('address')} fullWidth margin="normal" multiline rows={2}
             value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          <TextField label="ИНН" fullWidth margin="normal"
+          <TextField label={t('tin')} fullWidth margin="normal"
             value={form.tin} onChange={(e) => setForm({ ...form, tin: e.target.value })} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)} color="inherit">Отмена</Button>
-          <Button variant="contained" onClick={handleSave}>Сохранить</Button>
+          <Button onClick={() => setOpen(false)} color="inherit">{t('cancel')}</Button>
+          <Button variant="contained" onClick={handleSave}>{t('save')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

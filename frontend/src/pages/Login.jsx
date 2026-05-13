@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../context/LangContext'
+import { languageNames } from '../i18n/translations'
 import {
   Box, Card, TextField, Button, Typography, Alert, Container, InputAdornment, IconButton, Avatar,
+  ToggleButtonGroup, ToggleButton,
 } from '@mui/material'
-import { Visibility, VisibilityOff, AccountBalance, Lock } from '@mui/icons-material'
+import { Visibility, VisibilityOff, AccountBalance } from '@mui/icons-material'
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' })
@@ -12,18 +15,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const { login } = useAuth()
+  const { t, lang, changeLang } = useLang()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.username || !form.password) { setError('Заполните все поля'); return }
+    if (!form.username || !form.password) { setError(t('fillAllFields')); return }
     setError('')
     setLoading(true)
     try {
       await login(form.username, form.password)
       navigate('/')
     } catch {
-      setError('Неверное имя пользователя или пароль')
+      setError(t('wrongCredentials'))
     } finally {
       setLoading(false)
     }
@@ -35,15 +39,22 @@ export default function Login() {
         <Avatar sx={{ mx: 'auto', mb: 1.5, bgcolor: 'primary.main', width: 56, height: 56 }}>
           <AccountBalance sx={{ fontSize: 28 }} />
         </Avatar>
-        <Typography variant="h5" fontWeight={700}>Бухгалтерия</Typography>
-        <Typography variant="body2" color="text.secondary">Войдите в систему учёта</Typography>
+        <Typography variant="h5" fontWeight={700}>{t('appName')}</Typography>
+        <Typography variant="body2" color="text.secondary">{t('loginTitle')}</Typography>
+        <Box sx={{ mt: 2 }}>
+          <ToggleButtonGroup value={lang} exclusive onChange={(_, v) => v && changeLang(v)} size="small">
+            {Object.entries(languageNames).map(([code, name]) => (
+              <ToggleButton key={code} value={code} sx={{ px: 2, fontSize: '0.75rem' }}>{name}</ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        </Box>
       </Box>
       <Card sx={{ p: 4 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box component="form" onSubmit={handleSubmit}>
-          <TextField label="Имя пользователя" fullWidth margin="normal" required autoFocus
+          <TextField label={t('username')} fullWidth margin="normal" required autoFocus
             value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-          <TextField label="Пароль" type={showPw ? 'text' : 'password'} fullWidth margin="normal" required
+          <TextField label={t('password')} type={showPw ? 'text' : 'password'} fullWidth margin="normal" required
             value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
             InputProps={{ endAdornment: (
               <InputAdornment position="end">
@@ -54,11 +65,11 @@ export default function Login() {
             )}} />
           <Button type="submit" variant="contained" fullWidth size="large" sx={{ mt: 3, py: 1.5 }}
             disabled={loading}>
-            {loading ? 'Вход...' : 'Войти'}
+            {loading ? t('loggingIn') : t('login')}
           </Button>
         </Box>
         <Typography textAlign="center" sx={{ mt: 3 }} variant="body2">
-          Нет аккаунта? <Link to="/register" style={{ fontWeight: 600 }}>Зарегистрироваться</Link>
+          {t('noAccount')} <Link to="/register" style={{ fontWeight: 600 }}>{t('register')}</Link>
         </Typography>
       </Card>
     </Container>

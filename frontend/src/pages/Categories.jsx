@@ -6,8 +6,10 @@ import {
 } from '@mui/material'
 import { Add, Delete } from '@mui/icons-material'
 import api from '../api'
+import { useLang } from '../context/LangContext'
 
 export default function Categories() {
+  const { t } = useLang()
   const [categories, setCategories] = useState([])
   const [typeTab, setTypeTab] = useState('income')
   const [open, setOpen] = useState(false)
@@ -26,7 +28,7 @@ export default function Categories() {
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить категорию?')) {
+    if (confirm(t('deleteCategoryConfirm'))) {
       await api.delete(`/categories/${id}`)
       load()
     }
@@ -37,15 +39,15 @@ export default function Categories() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5">Категории</Typography>
+        <Typography variant="h5">{t('categories')}</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => { setForm({ name: '', type: typeTab }); setOpen(true) }}>
           Добавить
         </Button>
       </Box>
 
       <Tabs value={typeTab} onChange={(_, v) => setTypeTab(v)} sx={{ mb: 2 }}>
-        <Tab label="Доходы" value="income" />
-        <Tab label="Расходы" value="expense" />
+        <Tab label={t('incomes')} value="income" />
+        <Tab label={t('expenses')} value="expense" />
       </Tabs>
 
       <Card>
@@ -54,7 +56,7 @@ export default function Categories() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Название</TableCell>
+                  <TableCell>{t('name')}</TableCell>
                   <TableCell width={80}></TableCell>
                 </TableRow>
               </TableHead>
@@ -68,7 +70,7 @@ export default function Categories() {
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={2} align="center" sx={{ py: 4 }}>Нет категорий</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={2} align="center" sx={{ py: 4 }}>{t('noCategories')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -83,8 +85,8 @@ export default function Categories() {
             value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)} color="inherit">Отмена</Button>
-          <Button variant="contained" onClick={handleSave} disabled={!form.name}>Добавить</Button>
+          <Button onClick={() => setOpen(false)} color="inherit">{t('cancel')}</Button>
+          <Button variant="contained" onClick={handleSave} disabled={!form.name}>{t('addCategory')}</Button>
         </DialogActions>
       </Dialog>
 

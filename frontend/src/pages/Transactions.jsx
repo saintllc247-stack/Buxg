@@ -7,8 +7,10 @@ import {
 } from '@mui/material'
 import { Add, Edit, Delete, Search, Download, Upload, Clear } from '@mui/icons-material'
 import api from '../api'
+import { useLang } from '../context/LangContext'
 
 export default function Transactions() {
+  const { t } = useLang()
   const [txns, setTxns] = useState([])
   const [categories, setCategories] = useState([])
   const [clients, setClients] = useState([])
@@ -33,27 +35,27 @@ export default function Transactions() {
   const handleSave = async () => {
     const payload = { ...form, amount: parseFloat(form.amount), category_id: form.category_id ? Number(form.category_id) : null, client_id: form.client_id ? Number(form.client_id) : null }
     if (!payload.amount || payload.amount <= 0) {
-      showMsg('Сумма должна быть больше 0', 'error')
+      showMsg(t('amountError'), 'error')
       return
     }
     try {
       if (edit) await api.put(`/transactions/${edit.id}`, payload)
       else await api.post('/transactions', payload)
       setOpen(false); setEdit(null); load()
-      showMsg(edit ? 'Транзакция обновлена' : 'Транзакция добавлена')
+      showMsg(edit ? t('transactionUpdated') : t('transactionAdded'))
     } catch (err) {
-      showMsg(err.response?.data?.detail || 'Ошибка сохранения', 'error')
+      showMsg(err.response?.data?.detail || t('saveError'), 'error')
     }
   }
 
   const handleDelete = async (id) => {
-    if (confirm('Удалить транзакцию?')) {
+    if (confirm(t('deleteConfirm'))) {
       try {
         await api.delete(`/transactions/${id}`)
         load()
-        showMsg('Транзакция удалена')
+        showMsg(t('transactionDeleted'))
       } catch (err) {
-        showMsg(err.response?.data?.detail || 'Ошибка удаления', 'error')
+        showMsg(err.response?.data?.detail || t('deleteError'), 'error')
       }
     }
   }
@@ -74,7 +76,7 @@ export default function Transactions() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      showMsg(err.response?.data?.detail || 'Ошибка экспорта', 'error')
+      showMsg(err.response?.data?.detail || t('exportError'), 'error')
     }
   }
 
@@ -117,7 +119,7 @@ export default function Transactions() {
       load()
       showMsg(`Удалено ${ids.length} транзакций`)
     } catch (err) {
-      showMsg(err.response?.data?.detail || 'Ошибка', 'error')
+      showMsg(err.response?.data?.detail || t('saveError'), 'error')
     }
   }
 
@@ -151,18 +153,18 @@ export default function Transactions() {
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }} alignItems="center">
         <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Тип</InputLabel>
-          <Select value={filter.type} label="Тип" onChange={(e) => setFilter({ ...filter, type: e.target.value })}>
-            <MenuItem value="">Все</MenuItem>
-            <MenuItem value="income">Доходы</MenuItem>
-            <MenuItem value="expense">Расходы</MenuItem>
+          <InputLabel>{t('type')}</InputLabel>
+          <Select value={filter.type} label={t('type')} onChange={(e) => setFilter({ ...filter, type: e.target.value })}>
+            <MenuItem value="">{t('all')}</MenuItem>
+            <MenuItem value="income">{t('incomes')}</MenuItem>
+            <MenuItem value="expense">{t('expenses')}</MenuItem>
           </Select>
         </FormControl>
-        <TextField size="small" placeholder="Поиск..." value={filter.search}
+        <TextField size="small" placeholder={t('search')} value={filter.search}
           onChange={(e) => setFilter({ ...filter, search: e.target.value })}
           slotProps={{ input: { startAdornment: <Search sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> } }} />
         {(filter.type || filter.search) && (
-          <Button size="small" onClick={() => setFilter({ type: '', search: '' })}>Сбросить</Button>
+          <Button size="small" onClick={() => setFilter({ type: '', search: '' })}>{t('reset')}</Button>
         )}
         <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto !important' }}>
           {filtered.length} из {txns.length}
@@ -178,12 +180,12 @@ export default function Transactions() {
                   <TableCell padding="checkbox">
                     <Checkbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected} onChange={toggleSelectAll} />
                   </TableCell>
-                  <TableCell>Дата</TableCell>
+                  <TableCell>{t('date')}</TableCell>
                   <TableCell>Тип</TableCell>
-                  <TableCell>Категория</TableCell>
-                  <TableCell>Клиент</TableCell>
-                  <TableCell>Описание</TableCell>
-                  <TableCell align="right">Сумма</TableCell>
+                  <TableCell>{t('category')}</TableCell>
+                  <TableCell>{t('client')}</TableCell>
+                  <TableCell>{t('description')}</TableCell>
+                  <TableCell align="right">{t('amount')}</TableCell>
                   <TableCell width={80}></TableCell>
                 </TableRow>
               </TableHead>
@@ -199,13 +201,13 @@ export default function Transactions() {
                       <TableCell>{t.date}</TableCell>
                       <TableCell>
                         <Typography color={t.type === 'income' ? 'success.main' : 'error.main'} fontWeight={600}>
-                          {t.type === 'income' ? 'Доход' : 'Расход'}
+                          {t.type === 'income' ? t('income') : t('expense')}
                         </Typography>
                       </TableCell>
                       <TableCell><Chip label={catName || '-'} size="small" variant="outlined" /></TableCell>
                       <TableCell>{clientName || '-'}</TableCell>
                       <TableCell>{t.description || '-'}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} сум</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} {t('currency')}</TableCell>
                       <TableCell>
                         <IconButton size="small" onClick={() => openEdit(t)}><Edit fontSize="small" /></IconButton>
                         <IconButton size="small" onClick={() => handleDelete(t.id)}><Delete fontSize="small" /></IconButton>
@@ -214,7 +216,7 @@ export default function Transactions() {
                   )
                 })}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}>Нет транзакций</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}>{t('noTransactions')}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -241,13 +243,13 @@ export default function Transactions() {
                 load()
                 showMsg(`Импортировано ${r.data.imported} транзакций`)
               } catch (err) {
-                showMsg(err.response?.data?.detail || 'Ошибка импорта', 'error')
+                showMsg(err.response?.data?.detail || t('exportError'), 'error')
               }
             }} />
           </Button>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setImportOpen(false)} color="inherit">Закрыть</Button>
+          <Button onClick={() => setImportOpen(false)} color="inherit">{t('close')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -257,8 +259,8 @@ export default function Transactions() {
           <Typography>Будет удалено {selected.size} транзакци{selected.size === 1 ? 'я' : selected.size >= 2 && selected.size <= 4 ? 'и' : 'й'}.</Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">Отмена</Button>
-          <Button color="error" variant="contained" onClick={handleBulkDelete}>Удалить</Button>
+          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">{t('cancel')}</Button>
+          <Button color="error" variant="contained" onClick={handleBulkDelete}>{t('deleteSelected')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -283,7 +285,7 @@ export default function Transactions() {
       </Dialog>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ pb: 1 }}>{edit ? 'Редактировать транзакцию' : 'Новая транзакция'}</DialogTitle>
+        <DialogTitle sx={{ pb: 1 }}>{edit ? t('editTransaction') : t('newTransaction')}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="normal">
             <InputLabel>Тип</InputLabel>
