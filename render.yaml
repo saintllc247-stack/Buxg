@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: accounting-backend
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: accounting-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://accounting-frontend.onrender.com
+      - key: DEBUG
+        value: "false"
+
+  - type: web
+    name: accounting-frontend
+    env: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://accounting-backend.onrender.com/api
+
+databases:
+  - name: accounting-db
+    plan: free

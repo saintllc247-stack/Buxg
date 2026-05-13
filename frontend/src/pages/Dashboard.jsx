@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, Paper, Skeleton, Box, TextField, Button, Stack,
 } from '@mui/material'
 import { TrendingUp, TrendingDown, AccountBalanceWallet, FilterAlt } from '@mui/icons-material'
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import api from '../api'
 
 const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#dc2626', '#9333ea']
@@ -14,6 +14,18 @@ const statCards = [
   { key: 'total_expense', label: 'Расходы', icon: <TrendingDown />, color: '#dc2626', bg: '#fef2f2' },
   { key: 'balance', label: 'Баланс', icon: <AccountBalanceWallet />, color: '#2563eb', bg: '#eff6ff' },
 ]
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    return (
+      <Box sx={{ bgcolor: 'background.paper', border: '1px solid #e2e8f0', borderRadius: 1, p: 1.5, boxShadow: 2 }}>
+        <Typography variant="body2" fontWeight={600}>{payload[0].name}</Typography>
+        <Typography variant="body2" color="text.secondary">{Number(payload[0].value).toLocaleString()} сум</Typography>
+      </Box>
+    )
+  }
+  return null
+}
 
 export default function Dashboard() {
   const [data, setData] = useState(null)
@@ -33,6 +45,8 @@ export default function Dashboard() {
 
   useEffect(() => { load() }, [load])
 
+  const handleReset = () => { setDateFrom(''); setDateTo('') }
+
   if (error) return (
     <Box sx={{ p: 4, textAlign: 'center' }}>
       <Typography color="error" variant="h6" gutterBottom>Ошибка загрузки</Typography>
@@ -50,7 +64,7 @@ export default function Dashboard() {
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <TextField label="От" type="date" size="small"
             InputLabelProps={{ shrink: true }}
             value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
@@ -59,7 +73,7 @@ export default function Dashboard() {
             value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
           <Button variant="contained" startIcon={<FilterAlt />} onClick={load}>Применить</Button>
           {(dateFrom || dateTo) && (
-            <Button variant="text" onClick={() => { setDateFrom(''); setDateTo('') }}>Сбросить</Button>
+            <Button variant="text" onClick={handleReset}>Сбросить</Button>
           )}
         </Stack>
       </Grid>
@@ -88,9 +102,11 @@ export default function Dashboard() {
               : <Box sx={{ width: '100%', height: 300 }}>
                   <ResponsiveContainer>
                     <PieChart>
-                      <Pie data={data.income_by_category} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
+                      <Pie data={data.income_by_category} dataKey="amount" nameKey="name" cx="50%" cy="45%" outerRadius={90}>
                         {data.income_by_category.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 </Box>
@@ -108,9 +124,11 @@ export default function Dashboard() {
               : <Box sx={{ width: '100%', height: 300 }}>
                   <ResponsiveContainer>
                     <PieChart>
-                      <Pie data={data.expense_by_category} dataKey="amount" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
+                      <Pie data={data.expense_by_category} dataKey="amount" nameKey="name" cx="50%" cy="45%" outerRadius={90}>
                         {data.expense_by_category.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 </Box>
@@ -129,7 +147,7 @@ export default function Dashboard() {
                   <TableRow>
                     <TableCell>Дата</TableCell>
                     <TableCell>Тип</TableCell>
-                    <TableCell>Сумма</TableCell>
+                    <TableCell align="right">Сумма</TableCell>
                     <TableCell>Описание</TableCell>
                   </TableRow>
                 </TableHead>
@@ -143,7 +161,7 @@ export default function Dashboard() {
                           {t.type === 'income' ? 'Доход' : 'Расход'}
                         </Typography>
                       </TableCell>
-                      <TableCell>{t.amount.toLocaleString()} сум</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} сум</TableCell>
                       <TableCell>{t.description || '-'}</TableCell>
                     </TableRow>
                   ))}
@@ -159,3 +177,12 @@ export default function Dashboard() {
     </Grid>
   )
 }
+
+const COLORS = ['#2563eb', '#16a34a', '#ea580c', '#7c3aed', '#0891b2', '#ca8a04', '#dc2626', '#9333ea']
+
+const statCards = [
+  { key: 'total_income', label: 'Доходы', icon: <TrendingUp />, color: '#16a34a', bg: '#f0fdf4' },
+  { key: 'total_expense', label: 'Расходы', icon: <TrendingDown />, color: '#dc2626', bg: '#fef2f2' },
+  { key: 'balance', label: 'Баланс', icon: <AccountBalanceWallet />, color: '#2563eb', bg: '#eff6ff' },
+]
+

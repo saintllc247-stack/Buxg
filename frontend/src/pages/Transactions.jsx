@@ -1,0 +1,337 @@
+import { useState, useEffect } from 'react'
+import {
+  Box, Button, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
+  TextField, Select, MenuItem, FormControl, InputLabel, Typography, IconButton, Chip, Stack, Checkbox,
+  Snackbar, Alert, Tooltip,
+} from '@mui/material'
+import { Add, Edit, Delete, Search, Download, Upload, Clear } from '@mui/icons-material'
+import api from '../api'
+
+export default function Transactions() {
+  const [txns, setTxns] = useState([])
+  const [categories, setCategories] = useState([])
+  const [clients, setClients] = useState([])
+  const [open, setOpen] = useState(false)
+  const [edit, setEdit] = useState(null)
+  const [filter, setFilter] = useState({ type: '', search: '' })
+  const [importOpen, setImportOpen] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [selected, setSelected] = useState(new Set())
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+  const [form, setForm] = useState({ type: 'income', amount: '', category_id: '', description: '', date: new Date().toISOString().split('T')[0], client_id: '' })
+
+  const showMsg = (message, severity = 'success') => setSnackbar({ open: true, message, severity })
+
+  const load = () => api.get('/transactions').then((r) => setTxns(r.data))
+  const loadCats = () => api.get('/categories').then((r) => setCategories(r.data))
+  const loadClients = () => api.get('/clients').then((r) => setClients(r.data))
+
+  useEffect(() => { load(); loadCats(); loadClients() }, [])
+
+  const handleSave = async () => {
+    const payload = { ...form, amount: parseFloat(form.amount), category_id: form.category_id ? Number(form.category_id) : null, client_id: form.client_id ? Number(form.client_id) : null }
+    if (!payload.amount || payload.amount <= 0) {
+      showMsg('Сумма должна быть больше 0', 'error')
+      return
+    }
+    try {
+      if (edit) await api.put(`/transactions/${edit.id}`, payload)
+      else await api.post('/transactions', payload)
+      setOpen(false); setEdit(null); load()
+      showMsg(edit ? 'Транзакция обновлена' : 'Транзакция добавлена')
+    } catch (err) {
+      showMsg(err.response?.data?.detail || 'Ошибка сохранения', 'error')
+    }
+  }
+
+  const handleDelete = async (id) => {
+    if (confirm('Удалить транзакцию?')) {
+      try {
+        await api.delete(`/transactions/${id}`)
+        load()
+        showMsg('Транзакция удалена')
+      } catch (err) {
+        showMsg(err.response?.data?.detail || 'Ошибка удаления', 'error')
+      }
+    }
+  }
+
+  const openEdit = (t) => {
+    setEdit(t)
+    setForm({ type: t.type, amount: String(t.amount), category_id: t.category_id || '', description: t.description, date: t.date, client_id: t.client_id || '' })
+    setOpen(true)
+  }
+
+  const downloadExcel = async () => {
+    try {
+      const response = await api.get('/exports/transactions/excel', { responseType: 'blob' })
+      const url = URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'transactions.xlsx'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      showMsg(err.response?.data?.detail || 'Ошибка экспорта', 'error')
+    }
+  }
+
+  const filtered = txns.filter(t => {
+    if (filter.type && t.type !== filter.type) return false
+    if (filter.search) {
+      const q = filter.search.toLowerCase()
+      const catName = categories.find(c => c.id === t.category_id)?.name || ''
+      const clientName = clients.find(c => c.id === t.client_id)?.name || ''
+      if (!t.description?.toLowerCase().includes(q) && !catName.toLowerCase().includes(q) && !clientName.toLowerCase().includes(q)) return false
+    }
+    return true
+  })
+
+  const filteredIds = filtered.map(t => t.id)
+  const allSelected = filteredIds.length > 0 && filteredIds.every(id => selected.has(id))
+
+  const toggleSelect = (id) => {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    setSelected(next)
+  }
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelected(new Set([...selected].filter(id => !filteredIds.includes(id))))
+    } else {
+      const next = new Set(selected)
+      filteredIds.forEach(id => next.add(id))
+      setSelected(next)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    const ids = [...selected]
+    try {
+      await api.post('/transactions/bulk-delete', { ids })
+      setSelected(new Set())
+      setConfirmBulkDelete(false)
+      load()
+      showMsg(`Удалено ${ids.length} транзакций`)
+    } catch (err) {
+      showMsg(err.response?.data?.detail || 'Ошибка', 'error')
+    }
+  }
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h5">Транзакции</Typography>
+        <Stack direction="row" spacing={1}>
+          {selected.size > 0 && (
+            <Button color="error" variant="outlined" startIcon={<Delete />} onClick={() => setConfirmBulkDelete(true)}>
+              Удалить ({selected.size})
+            </Button>
+          )}
+          <Button variant="outlined" startIcon={<Upload />} onClick={() => setImportOpen(true)}>
+            Импорт CSV
+          </Button>
+          <Tooltip title="Удалить все транзакции, добавленные через импорт">
+            <Button variant="outlined" color="error" startIcon={<Clear />} onClick={() => setConfirmClear(true)}>
+              Очистить импорт
+            </Button>
+          </Tooltip>
+          <Button variant="outlined" startIcon={<Download />} onClick={downloadExcel}>
+            Excel
+          </Button>
+          <Button variant="contained" startIcon={<Add />}
+            onClick={() => { setEdit(null); setForm({ type: 'income', amount: '', category_id: '', description: '', date: new Date().toISOString().split('T')[0], client_id: '' }); setOpen(true) }}>
+            Добавить
+          </Button>
+        </Stack>
+      </Box>
+
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }} alignItems="center">
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Тип</InputLabel>
+          <Select value={filter.type} label="Тип" onChange={(e) => setFilter({ ...filter, type: e.target.value })}>
+            <MenuItem value="">Все</MenuItem>
+            <MenuItem value="income">Доходы</MenuItem>
+            <MenuItem value="expense">Расходы</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField size="small" placeholder="Поиск..." value={filter.search}
+          onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+          slotProps={{ input: { startAdornment: <Search sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} /> } }} />
+        {(filter.type || filter.search) && (
+          <Button size="small" onClick={() => setFilter({ type: '', search: '' })}>Сбросить</Button>
+        )}
+        <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto !important' }}>
+          {filtered.length} из {txns.length}
+        </Typography>
+      </Stack>
+
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox checked={allSelected} indeterminate={selected.size > 0 && !allSelected} onChange={toggleSelectAll} />
+                  </TableCell>
+                  <TableCell>Дата</TableCell>
+                  <TableCell>Тип</TableCell>
+                  <TableCell>Категория</TableCell>
+                  <TableCell>Клиент</TableCell>
+                  <TableCell>Описание</TableCell>
+                  <TableCell align="right">Сумма</TableCell>
+                  <TableCell width={80}></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filtered.map((t) => {
+                  const catName = categories.find(c => c.id === t.category_id)?.name
+                  const clientName = clients.find(c => c.id === t.client_id)?.name
+                  return (
+                    <TableRow key={t.id} hover selected={selected.has(t.id)}>
+                      <TableCell padding="checkbox">
+                        <Checkbox checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
+                      </TableCell>
+                      <TableCell>{t.date}</TableCell>
+                      <TableCell>
+                        <Typography color={t.type === 'income' ? 'success.main' : 'error.main'} fontWeight={600}>
+                          {t.type === 'income' ? 'Доход' : 'Расход'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell><Chip label={catName || '-'} size="small" variant="outlined" /></TableCell>
+                      <TableCell>{clientName || '-'}</TableCell>
+                      <TableCell>{t.description || '-'}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{t.amount.toLocaleString()} сум</TableCell>
+                      <TableCell>
+                        <IconButton size="small" onClick={() => openEdit(t)}><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" onClick={() => handleDelete(t.id)}><Delete fontSize="small" /></IconButton>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+                {filtered.length === 0 && (
+                  <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}>Нет транзакций</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+
+      <Dialog open={importOpen} onClose={() => setImportOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>Импорт транзакций из CSV</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Поддерживаются CSV и Excel (.xlsx). Автоопределение формата: обычный (type,amount,description,date) или выгрузка маркетплейса (orderId, order amount, customer).
+          </Typography>
+          <Button variant="contained" component="label">
+            Выбрать файл
+            <input type="file" accept=".csv,.xlsx" hidden onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const formData = new FormData()
+              formData.append('file', file)
+              try {
+                const r = await api.post('/exports/transactions/import', formData)
+                setImportOpen(false)
+                load()
+                showMsg(`Импортировано ${r.data.imported} транзакций`)
+              } catch (err) {
+                showMsg(err.response?.data?.detail || 'Ошибка импорта', 'error')
+              }
+            }} />
+          </Button>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setImportOpen(false)} color="inherit">Закрыть</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={confirmBulkDelete} onClose={() => setConfirmBulkDelete(false)} maxWidth="xs">
+        <DialogTitle>Удалить выбранные транзакции?</DialogTitle>
+        <DialogContent>
+          <Typography>Будет удалено {selected.size} транзакци{selected.size === 1 ? 'я' : selected.size >= 2 && selected.size <= 4 ? 'и' : 'й'}.</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmBulkDelete(false)} color="inherit">Отмена</Button>
+          <Button color="error" variant="contained" onClick={handleBulkDelete}>Удалить</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={confirmClear} onClose={() => setConfirmClear(false)} maxWidth="xs">
+        <DialogTitle>Удалить импортированные транзакции?</DialogTitle>
+        <DialogContent>
+          <Typography>Все транзакции, добавленные через импорт, будут безвозвратно удалены.</Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmClear(false)} color="inherit">Отмена</Button>
+          <Button color="error" variant="contained" onClick={async () => {
+            try {
+              const r = await api.delete('/transactions/imported/clear')
+              setConfirmClear(false)
+              load()
+              showMsg(`Удалено ${r.data.deleted} импортированных транзакций`)
+            } catch (err) {
+              showMsg(err.response?.data?.detail || 'Ошибка', 'error')
+            }
+          }}>Удалить</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>{edit ? 'Редактировать транзакцию' : 'Новая транзакция'}</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Тип</InputLabel>
+            <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, category_id: '' })} label="Тип">
+              <MenuItem value="income">Доход</MenuItem>
+              <MenuItem value="expense">Расход</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField label="Сумма" type="number" fullWidth margin="normal" required autoFocus
+            inputProps={{ min: 0, step: 'any' }}
+            value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Категория</InputLabel>
+            <Select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} label="Категория">
+              <MenuItem value="">—</MenuItem>
+              {categories.filter(c => c.type === form.type).map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Клиент</InputLabel>
+            <Select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} label="Клиент">
+              <MenuItem value="">—</MenuItem>
+              {clients.map((c) => (<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>))}
+            </Select>
+          </FormControl>
+          <TextField label="Описание" fullWidth margin="normal" multiline rows={2}
+            value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <TextField label="Дата" type="date" fullWidth margin="normal" required
+            value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpen(false)} color="inherit">Отмена</Button>
+          <Button variant="contained" onClick={handleSave}
+            disabled={!form.amount || !form.date}>
+            Сохранить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  )
+}
+
