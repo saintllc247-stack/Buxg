@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+# backend/static/
+node_modules/
+dist/
+.venv/
+frontend/android/
+frontend/.env.production
