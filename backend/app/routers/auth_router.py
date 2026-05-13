@@ -16,6 +16,8 @@ DEFAULT_CATEGORIES = {
 
 @router.post("/register", response_model=Token)
 def register(data: UserRegister, db: Session = Depends(get_db)):
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 6 символов")
     if db.query(User).filter(User.username == data.username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
     if db.query(User).filter(User.email == data.email).first():

@@ -13,6 +13,11 @@ from app.routers import auth_router, categories, clients, transactions, invoices
 app = FastAPI(title="Accounting App", version="1.0.0", debug=settings.DEBUG)
 
 
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+
+
 @app.exception_handler(Exception)
 async def global_exception(request: Request, exc: Exception):
     traceback.print_exc()
