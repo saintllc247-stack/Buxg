@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import User, Client
 from app.schemas import ClientCreate, ClientOut
 from app.auth import get_current_user
+
+
+class BulkDeleteRequest(BaseModel):
+    ids: list[int]
 
 router = APIRouter(prefix="/api/clients", tags=["clients"])
 
@@ -43,3 +48,10 @@ def delete_client(client_id: int, db: Session = Depends(get_db), user: User = De
     db.delete(client)
     db.commit()
     return {"ok": True}
+
+
+@router.post("/bulk-delete")
+def bulk_delete_clients(data: BulkDeleteRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    deleted = db.query(Client).filter(Client.id.in_(data.ids), Client.user_id == user.id).delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": deleted}
