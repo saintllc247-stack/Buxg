@@ -103,6 +103,9 @@ def migrate():
 
 static_dir = Path(__file__).resolve().parent.parent / "static"
 if static_dir.exists():
+    app.mount("/icons", StaticFiles(directory=str(static_dir / "icons")), name="icons")
+    app.mount("/assets", StaticFiles(directory=str(static_dir / "assets")), name="assets") if (static_dir / "assets").exists() else None
+
     index_file = static_dir / "index.html"
 
     @app.get("/{full_path:path}")
@@ -113,15 +116,7 @@ if static_dir.exists():
         if not str(file).startswith(str(static_dir.resolve())):
             return JSONResponse(status_code=404, content={"detail": "Not Found"})
         if file.is_file():
-            suffix = file.suffix.lower()
-            media_types = {
-                '.png': 'image/png',
-                '.jpg': 'image/jpeg',
-                '.svg': 'image/svg+xml',
-                '.ico': 'image/x-icon',
-                '.webmanifest': 'application/manifest+json',
-                '.js': 'application/javascript',
-                '.css': 'text/css',
-                '.woff2': 'font/woff2',
-            }
-            return FileResponse(str(file), media_type=media_types.get(suffix))
+            return FileResponse(str(file))
+        if index_file.exists():
+            return FileResponse(str(index_file))
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
