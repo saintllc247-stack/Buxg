@@ -11,8 +11,10 @@ cmds = [
 cmds = [
   "cd frontend && npm run build",
   "rm -rf backend/static/assets",
-  "mkdir -p backend/static",
-  "cp -r frontend/dist/. backend/static/"
+  "cp -r frontend/dist/. backend/static/",
+  "mkdir -p backend/static/icons",
+  "cp frontend/public/icons/icon-192.png backend/static/icons/",
+  "cp frontend/public/icons/icon-512.png backend/static/icons/"
 ]
 
 [start]
