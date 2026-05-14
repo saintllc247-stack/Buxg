@@ -4,6 +4,7 @@ import traceback
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
 from app.config import settings
 from app.routers import auth_router, categories, clients, transactions, invoices, reports, exports, documents
