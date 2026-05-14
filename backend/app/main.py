@@ -113,7 +113,15 @@ if static_dir.exists():
         if not str(file).startswith(str(static_dir.resolve())):
             return JSONResponse(status_code=404, content={"detail": "Not Found"})
         if file.is_file():
-            return FileResponse(str(file))
-        if index_file.exists():
-            return FileResponse(str(index_file))
-        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+            suffix = file.suffix.lower()
+            media_types = {
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.svg': 'image/svg+xml',
+                '.ico': 'image/x-icon',
+                '.webmanifest': 'application/manifest+json',
+                '.js': 'application/javascript',
+                '.css': 'text/css',
+                '.woff2': 'font/woff2',
+            }
+            return FileResponse(str(file), media_type=media_types.get(suffix))
